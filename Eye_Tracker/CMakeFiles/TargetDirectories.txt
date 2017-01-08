@@ -1,3 +1,0 @@
-/home/pi/Desktop/Ribeiro/Projeto_VC/Eye_Tracker/CMakeFiles/edit_cache.dir
-/home/pi/Desktop/Ribeiro/Projeto_VC/Eye_Tracker/CMakeFiles/rebuild_cache.dir
-/home/pi/Desktop/Ribeiro/Projeto_VC/Eye_Tracker/CMakeFiles/projeto_vc.dir
