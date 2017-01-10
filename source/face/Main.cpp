@@ -232,8 +232,8 @@ int main(int argc, const char** argv)
 		{
 			if(!(*f)->update())
 			{
-				delete *f;
-				face_list.remove(*f);
+				//delete *f;
+				//face_list.remove(*f);
 			}
 			else
 			{
@@ -245,7 +245,7 @@ int main(int argc, const char** argv)
 		imshow("FaceTracker", frame);
 
 		//Get keyboard input
-		int keyboard = waitKey(16);
+		int keyboard = waitKey(1);
 		if(keyboard == 27)
 		{
 			break;
