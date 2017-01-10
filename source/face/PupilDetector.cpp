@@ -12,9 +12,9 @@ using namespace cv;
 class PupilDetector
 {
 	public:
-		static const int eye_width = 20;
+		static const int eye_width = 30;
 		static const int blur_size = 3;
-		static constexpr double gradient_threshold = 40.0;
+		static constexpr double gradient_threshold = 60.0;
 		static const bool post_process_enabled = false;
 		static constexpr float post_process_threshold = 0.97;
 

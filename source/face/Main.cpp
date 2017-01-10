@@ -7,9 +7,9 @@
 #include <list>
 #include <stdio.h>
 
+#include "PupilDetector.cpp"
 #include "object/Face.cpp"
 #include "math/RectUtils.cpp"
-#include "PupilDetector.cpp"
 
 using namespace std;
 using namespace cv;
@@ -72,8 +72,8 @@ int main(int argc, const char** argv)
 	}
 
 	//Configure window
-	namedWindow("Face", CV_WINDOW_NORMAL);
-	setMouseCallback("Face", mouseEvents, nullptr);
+	namedWindow("FaceTracker", CV_WINDOW_NORMAL);
+	setMouseCallback("FaceTracker", mouseEvents, nullptr);
 
 	//Camera frame
 	Mat frame;
@@ -93,7 +93,7 @@ int main(int argc, const char** argv)
 		vector<Rect> faces;
 
 		//Detect faces
-		face_cascade.detectMultiScale(gray, faces, 1.1, 2, CV_HAAR_SCALE_IMAGE);
+		face_cascade.detectMultiScale(gray, faces, 1.5, 2, CV_HAAR_SCALE_IMAGE);
 		for(unsigned int i = 0; i < faces.size(); i++)
 		{
 			Face* face = nullptr;
@@ -135,25 +135,20 @@ int main(int argc, const char** argv)
 			if(found == 0)
 			{
 				face = new Face();
-				face_list.push_back(face);
 			}
 
-			face->update(faces[i]);
+			//Counter for elements found inside the face
+			int elements = 0;
 
-			//Upper and lower parts of face
+			//Set face box
+			face->setBox(faces[i]);
+
 			Rect upper_rect = Rect(faces[i].x, faces[i].y, faces[i].width, faces[i].height * 0.6);
 			Mat upper = gray(upper_rect);
 
-			Rect middle_rect = Rect(faces[i].x, faces[i].y + faces[i].height * 0.35, faces[i].width, faces[i].height * 0.45);
-			Mat middle = gray(middle_rect);
-
-
-			Rect lower_rect = Rect(faces[i].x, faces[i].y + faces[i].height * 0.6, faces[i].width, faces[i].height * 0.4);
-			Mat lower = gray(lower_rect);
-
 			//Detect eyes
 			vector<Rect> eyes;
-			eyes_cascade.detectMultiScale(upper, eyes, 1.05, 3, CV_HAAR_SCALE_IMAGE);
+			eyes_cascade.detectMultiScale(upper, eyes, 1.1, 3, CV_HAAR_SCALE_IMAGE);
 			if(eyes.size() >= 2)
 			{
 				for(unsigned int j = 0; j < 2; j++)
@@ -176,51 +171,69 @@ int main(int argc, const char** argv)
 							//Right eye
 							if(eyes[j].x < eyes[k].x)
 							{
-								face->updateRightEye(center, radius, pupil);
+								face->setRightEye(center, radius, pupil);
 							}
 							//Left eye
 							else
 							{
-								face->updateLeftEye(center, radius, pupil);
+								face->setLeftEye(center, radius, pupil);
 							}
 							break;
 						}
 					}
+
+					elements++;
 				}
 			}
 
+			Rect middle_rect = Rect(faces[i].x, faces[i].y + faces[i].height * 0.35, faces[i].width, faces[i].height * 0.45);
+			Mat middle = gray(middle_rect);
+
 			//Detect nose
 			vector<Rect> noses;
-			nose_cascade.detectMultiScale(middle, noses, 1.5, 2, CV_HAAR_SCALE_IMAGE);
+			nose_cascade.detectMultiScale(middle, noses, 1.3, 2, CV_HAAR_SCALE_IMAGE);
 
 			if(noses.size() > 0)
 			{
 				noses[0].x += middle_rect.x;
 				noses[0].y += middle_rect.y;
 
-				face->updateNose(noses[0]);
+				elements++;
+
+				face->setNoseBox(noses[0]);
 			}
 
+			Rect lower_rect = Rect(faces[i].x, faces[i].y + faces[i].height * 0.6, faces[i].width, faces[i].height * 0.4);
+			Mat lower = gray(lower_rect);
 
 			//Detect smile
-			/*vector<Rect> smiles;
+			vector<Rect> smiles;
 			smile_cascade.detectMultiScale(lower, smiles, 1.5, 2, CV_HAAR_SCALE_IMAGE);
-
-			smiles[i].x += lower_rect.x;
-			smiles[i].y += lower_rect.y;
 
 			if(smiles.size() > 0)
 			{
-				rectangle(frame, smiles[i], Scalar(201, 255, 120), 2);
-			}*/
+				smiles[0].x += lower_rect.x;
+				smiles[0].y += lower_rect.y;
+
+				elements++;
+
+				face->setMouthBox(smiles[0]);
+			}
+
+			//If its a new face add it to the face list
+			if(found == 0 && elements > 0)
+			{
+				face_list.push_back(face);
+			}
 		}
 
 		//Draw faces
 		for(list<Face*>::iterator f = face_list.begin(); f != face_list.end(); f++)
 		{
-			if(!(*f)->updateTracking())
+			if(!(*f)->update())
 			{
-				//face_list.remove(*f);
+				delete *f;
+				face_list.remove(*f);
 			}
 			else
 			{
@@ -228,9 +241,8 @@ int main(int argc, const char** argv)
 			}
 		}
 
-
 		//Display frame
-		imshow("Face", frame);
+		imshow("FaceTracker", frame);
 
 		//Get keyboard input
 		int keyboard = waitKey(16);

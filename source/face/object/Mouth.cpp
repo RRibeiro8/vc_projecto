@@ -2,13 +2,13 @@
 
 #include "../math/UUIDGenerator.cpp"
 
-#ifndef NOSE
-#define NOSE
+#ifndef MOUTH
+#define MOUTH
 
 using namespace cv;
 using namespace std;
 
-class Nose
+class Mouth
 {
 	private:
 		static const int DEFAULT_TTL = 10;
@@ -25,7 +25,7 @@ class Nose
 		string uuid;
 
 		//Constructor
-		Nose()
+		Mouth()
 		{
 			updated = false;
 			frame = 0;
@@ -34,7 +34,7 @@ class Nose
 			uuid = UUIDGenerator::generate();
 		}
 
-		//Update nose box
+		//Set box
 		void setBox(Rect box)
 		{
 			velocity.x = (box.x + box.width * 0.5) - position.x;
@@ -69,16 +69,16 @@ class Nose
 			return ttl > 0;
 		}
 
-		//Draw nose to image
+		//Draw image
 		void draw(Mat image)
 		{
 			if(ttl > 0)
 			{
-				ellipse(image, position, Size(box.width * 0.5, box.height * 0.5), 0, 0, 360, Scalar(0, 0, 255), 2);
+				ellipse(image, position, Size(box.width * 0.5, box.height * 0.5), 0, 0, 360, Scalar(201, 255, 120), 2);
 			}
 		}
 
-		//String with nose description
+		//String with Mouth description
 		string toString()
 		{
 			return "UUID:" + uuid;

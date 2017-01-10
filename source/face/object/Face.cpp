@@ -5,6 +5,7 @@
 #include "../math/UUIDGenerator.cpp"
 #include "Eye.cpp"
 #include "Nose.cpp"
+#include "Mouth.cpp"
 
 #ifndef FACE
 #define FACE
@@ -15,16 +16,17 @@ using namespace std;
 
 class Face
 {
-	public:
-		static const int DEFAULT_TTL = 20;
+	private:
+		static const int DEFAULT_TTL = 30;
 
-		//Face Geometry
+	public:
+		Point position, velocity;
 		Rect box;
-		Point velocity;
 
 		//Elements
 		Eye eye_left, eye_right;
 		Nose nose;
+		Mouth mouth;
 
 		//Time control
 		bool updated;
@@ -36,12 +38,9 @@ class Face
 		//Constructor
 		Face()
 		{
-			box = Rect();
-			velocity = Point();
-
 			frame = 0;
 
-			updated = true;
+			updated = false;
 			ttl = DEFAULT_TTL;
 
 			eye_left.setSide(Eye::LEFT);
@@ -50,11 +49,14 @@ class Face
 			uuid = UUIDGenerator::generate();
 		}
 
-		//Update face box
-		void update(Rect rect)
+		//Set face box
+		void setBox(Rect rect)
 		{
-			velocity.x = rect.x - box.x;
-			velocity.y = rect.y - box.y;
+			velocity.x = (box.x + box.width * 0.5) - position.x;
+			velocity.y = (box.y + box.height * 0.5) - position.y;
+
+			position.x = box.x + box.width * 0.5;
+			position.y = box.y + box.height * 0.5;
 
 			box.x = rect.x;
 			box.y = rect.y;
@@ -64,8 +66,32 @@ class Face
 			updated = true;
 		}
 
-		//Update tracking
-		bool updateTracking()
+		//Set left eye
+		void setLeftEye(Point center, float radius, Point pupil)
+		{
+			eye_left.setEye(center, radius, pupil);
+		}
+
+		//Set right eye
+		void setRightEye(Point center, float radius, Point pupil)
+		{
+			eye_right.setEye(center, radius, pupil);
+		}
+
+		//Set nose box
+		void setNoseBox(Rect rect)
+		{
+			nose.setBox(rect);
+		}
+
+		//Set mouth box
+		void setMouthBox(Rect rect)
+		{
+			mouth.setBox(rect);
+		}
+
+		//Update
+		bool update()
 		{
 			frame++;
 
@@ -82,35 +108,26 @@ class Face
 			return ttl > 0;
 		}
 
-		//Update left eye
-		void updateLeftEye(Point center, float radius, Point pupil)
-		{
-			eye_left.update(center, radius, pupil);
-		}
-
-		//Update right eye
-		void updateRightEye(Point center, float radius, Point pupil)
-		{
-			eye_right.update(center, radius, pupil);
-		}
-
-		//Update nose
-		void updateNose(Rect rect)
-		{
-			nose.update(rect);
-		}
-
-		//Draw face to image
+		//Draw to image
 		void draw(Mat image)
 		{
-			putText(image, toString(), Point(box.x, box.y - 10), FONT_HERSHEY_SIMPLEX, 0.4, Scalar(255, 0, 255), 1);
+			//Draw text overlay
+			putText(image, "UUID:" + uuid, Point(box.x, box.y - 10), FONT_HERSHEY_SIMPLEX, 0.4, Scalar(255, 0, 255), 1);
+			putText(image, "Frame:" + to_string(frame) + " TTL:" + to_string(ttl) + " Speed: (" + to_string(velocity.x) + ", " + to_string(velocity.y) + ")", Point(box.x, box.y - 25), FONT_HERSHEY_SIMPLEX, 0.4, Scalar(255, 0, 255), 1);
 
 			rectangle(image, box, Scalar(255, 0, 0), 2);
 
+			eye_left.update();
 			eye_left.draw(image);
+
+			eye_right.update();
 			eye_right.draw(image);
 
+			nose.update();
 			nose.draw(image);
+
+			mouth.update();
+			mouth.draw(image);
 		}
 
 		//Create string with face description
