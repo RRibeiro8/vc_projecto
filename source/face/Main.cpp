@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <list>
+#include <ctime>
 #include <stdio.h>
 
 #include "PupilDetector.cpp"
@@ -13,6 +14,9 @@
 
 using namespace std;
 using namespace cv;
+
+//Global Variables
+bool debug = true;
 
 //Files path
 String path = "data/";
@@ -36,6 +40,28 @@ void mouseEvents(int event, int x, int y, int flags, void *param)
 	{
 		//TODO <MOUSE INTERACTION>
 	}
+}
+
+int getTimeMS()
+{
+	timeb tb;
+	ftime(&tb);
+
+	int nCount = tb.millitm + (tb.time & 0xfffff) * 1000;
+
+	return nCount;
+}
+
+int timeDeltaMS(int start)
+{
+	int nSpan = getTimeMS() - start;
+
+	if(nSpan < 0)
+	{
+		return nSpan + (0x100000 * 1000);
+	}
+
+	return nSpan;
 }
 
 //Main
@@ -89,6 +115,8 @@ int main(int argc, const char** argv)
 
 		Mat gray;
 		cvtColor(frame, gray, CV_BGR2GRAY);
+
+		int time = getTimeMS();
 
 		vector<Rect> faces;
 
@@ -232,8 +260,8 @@ int main(int argc, const char** argv)
 		{
 			if(!(*f)->update())
 			{
-				//delete *f;
-				//face_list.remove(*f);
+				delete *f;
+				face_list.remove(*f);
 			}
 			else
 			{
@@ -241,11 +269,19 @@ int main(int argc, const char** argv)
 			}
 		}
 
+		int delta = timeDeltaMS(time);
+
+		if(debug)
+		{
+			printf("Frame time: %d\n", delta);
+			fflush(stdout);
+		}
+
 		//Display frame
 		imshow("FaceTracker", frame);
 
 		//Get keyboard input
-		int keyboard = waitKey(1);
+		int keyboard = waitKey(16);
 		if(keyboard == 27)
 		{
 			break;
@@ -254,4 +290,6 @@ int main(int argc, const char** argv)
 
 	return 0;
 }
+
+
 
